@@ -1,15 +1,30 @@
 [
   {
     "id": "Foo",
+    "props": {
+      "ex": 1,
+      "nested_prop": {
+        "nested_a": "foo_nested_prop_a",
+        "nested_b": "foo_nested_prop_b"
+      }
+    },
     "tags": [
       "Bar"
     ]
   },
   {
-    "id": "Bar"
+    "id": "Bar",
+    "props": {
+      "ex": 2
+    }
   },
   {
     "id": "Fiz",
+    "props": {
+      "nested_prop": {
+        "nested_a": "fiz_nested_prop_a"
+      }
+    },
     "tags": [
       "Foo", "Bar"
     ]
