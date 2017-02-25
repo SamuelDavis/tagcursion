@@ -8,9 +8,9 @@ defmodule TagcursionTest do
 
   test "it loads tags from a JSON list", %{tag_store: tag_store} do
     assert tag_store == %{
-      "Bar" => %Tagcursion.Tag{id: "Bar", props: %{}, tags: []},
+      "Bar" => %Tagcursion.Tag{id: "Bar", props: %{"ex" => 2}, tags: []},
       "Fiz" => %Tagcursion.Tag{id: "Fiz", props: %{}, tags: ["Foo", "Bar"]},
-      "Foo" => %Tagcursion.Tag{id: "Foo", props: %{}, tags: ["Bar"]}
+      "Foo" => %Tagcursion.Tag{id: "Foo", props: %{"ex" => 1}, tags: ["Bar"]}
     }
   end
 
@@ -39,6 +39,15 @@ defmodule TagcursionTest do
       tag_store["Foo"],
       tag_store["Bar"],
       tag_store["Bar"]
+    ]
+  end
+
+  test "it reduces a given property on a tag", %{tag_store: tag_store} do
+    assert Tagcursion.reduce_prop(tag_store, tag_store["Fiz"], "ex") == [
+      {"Fiz", nil},
+      {"Foo", 1},
+      {"Bar", 2},
+      {"Bar", 2}
     ]
   end
 end

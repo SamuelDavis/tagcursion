@@ -23,7 +23,7 @@ defmodule Tagcursion do
   end
 
   @doc """
-  Generate a list of `Tagcursion.Tag`s from a list of `tag_ids`
+  Collect a list of `Tagcursion.Tag`s from a list of `tag_ids`
   """
   def reduce_tags(tag_store, tag_ids, acc) when is_list(tag_ids) do
     tag_ids
@@ -32,10 +32,18 @@ defmodule Tagcursion do
   end
 
   @doc """
-  Fetch a `Tagcursion.Tag` as a list by `tag_id`
+  Collect a list of `Tagcursion.Tag` by `tag_id`
   """
   def reduce_tags(tag_store, tag_id, acc) when is_bitstring(tag_id) do
     tag = Map.fetch!(tag_store, tag_id)
     [tag | reduce_tags(tag_store, tag, acc)]
+  end
+
+  @doc """
+  Collect a list of properties from all the reduced_tags of `tag` and `tag` itself
+  """
+  def reduce_prop(tag_store, tag, prop) do
+    [tag | reduce_tags(tag_store, tag)]
+    |> Enum.map(fn tag -> {tag.id, Map.get(tag.props, prop)} end)
   end
 end

@@ -1,12 +1,18 @@
 [
   {
     "id": "Foo",
+    "props": {
+      "ex": 1
+    },
     "tags": [
       "Bar"
     ]
   },
   {
-    "id": "Bar"
+    "id": "Bar",
+    "props": {
+      "ex": 2
+    }
   },
   {
     "id": "Fiz",
