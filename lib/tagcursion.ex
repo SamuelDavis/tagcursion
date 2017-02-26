@@ -1,6 +1,6 @@
 defmodule Tagcursion do
   @moduledoc """
-  Tagcursion is the gateway for aggregating Tagcursion.Tag structs
+  Tagcursion is the gateway for aggregating  structs
   """
 
   @doc """
@@ -9,21 +9,20 @@ defmodule Tagcursion do
   def read_json(filepath) do
     filepath
     |> File.read!
-    |> Poison.decode!(as: [%Tagcursion.Tag{}])
-    |> Enum.into(%{}, &({&1.id, &1}))
+    |> Poison.decode!(as: [%{}])
+    |> Enum.into(%{}, &({&1["id"], &1}))
   end
   
   def reduce_tags(tag_store, tag, acc \\ [])
 
   @doc """
-  Generate a list of `Tagcursion.Tag`s from a Tagcursion.Tag
+  Collect a list of tags from a tag's related tag_ids
   """
-  def reduce_tags(tag_store, %Tagcursion.Tag{tags: tag_ids}, acc) do
-    reduce_tags(tag_store, tag_ids, acc)
-  end
+  def reduce_tags(tag_store, tag, acc) when is_map(tag),
+    do: reduce_tags(tag_store, Map.get(tag, "tags", []), acc)
 
   @doc """
-  Generate a list of `Tagcursion.Tag`s from a list of `tag_ids`
+  Collect a list of tags from a list of `tag_ids`
   """
   def reduce_tags(tag_store, tag_ids, acc) when is_list(tag_ids) do
     tag_ids
@@ -32,7 +31,7 @@ defmodule Tagcursion do
   end
 
   @doc """
-  Fetch a `Tagcursion.Tag` as a list by `tag_id`
+  Collect a list of tags referenced by a `tag_id`
   """
   def reduce_tags(tag_store, tag_id, acc) when is_bitstring(tag_id) do
     tag = Map.fetch!(tag_store, tag_id)
