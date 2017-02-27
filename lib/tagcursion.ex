@@ -12,7 +12,7 @@ defmodule Tagcursion do
     |> Poison.decode!(as: [%{}])
     |> Enum.into(%{}, &({&1["id"], &1}))
   end
-  
+
   def reduce_tags(tag_store, tag, acc \\ [])
 
   @doc """
@@ -36,5 +36,9 @@ defmodule Tagcursion do
   def reduce_tags(tag_store, tag_id, acc) when is_bitstring(tag_id) do
     tag = Map.fetch!(tag_store, tag_id)
     [tag | reduce_tags(tag_store, tag, acc)]
+  end
+
+  def filter_tags(tag_store, regex) do
+    Enum.filter(tag_store, fn({id, _tag}) -> Regex.match?(regex, id) end) |> Enum.into(%{})
   end
 end

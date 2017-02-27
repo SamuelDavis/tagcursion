@@ -41,4 +41,14 @@ defmodule TagcursionTest do
       tag_store["Bar"]
     ]
   end
+
+  test "it returns all tags matching a regex", %{tag_store: tag_store} do
+    assert Tagcursion.filter_tags(tag_store, ~r/F.*/) == [
+      tag_store["Foo"],
+      tag_store["Fiz"]
+    ] or Tagcursion.filter_tags(tag_store, ~r/F.*/) == [
+      tag_store["Fiz"],
+      tag_store["Foo"]
+    ]
+  end
 end
