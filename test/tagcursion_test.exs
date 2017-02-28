@@ -3,10 +3,10 @@ defmodule TagcursionTest do
   doctest Tagcursion
 
   setup do
-    [tag_store: Tagcursion.read_json("data/example.json")]
+    [tag_store: Tagcursion.read_json_dir("data/") |> Tagcursion.tag_list_to_map]
   end
 
-  test "it loads tags from a JSON list", %{tag_store: tag_store} do
+  test "it loads tags from a nested directory of JSON files", %{tag_store: tag_store} do
     assert tag_store == %{
       "Bar" => %{"id" => "Bar"},
       "Fiz" => %{"id" => "Fiz", "tags" => ["Foo", "Bar"]},
