@@ -50,4 +50,8 @@ defmodule Tagcursion do
     tag = Map.fetch!(tag_store, tag_id)
     [tag | reduce_tags(tag_store, tag, acc)]
   end
+
+  def filter_tags(tag_store, regex) do
+    Enum.filter(tag_store, fn({id, _tag}) -> Regex.match?(regex, id) end) |> Enum.into(%{})
+  end
 end
