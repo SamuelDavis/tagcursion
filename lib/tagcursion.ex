@@ -1,57 +1,91 @@
 defmodule Tagcursion do
-  @moduledoc """
-  Tagcursion is the gateway for aggregating  structs
-  """
+  alias :ets, as: Ets
+  @table :tags
 
   @doc """
-  Collect a list of tags into a map from the `data_dir` directory path
+  Initialize the Erlang Term Storage table to hold tags.
+  ## Examples
+    iex> Tagcursion.init
+    :tags
   """
-  def read_json_dir(data_dir \\ "data/") do
-    data_dir
-    |> File.ls!
-    |> Stream.map(fn filename -> path = data_dir <> filename
-      cond do
-        File.dir?(path) -> read_json_dir(path <> "/")
-        Regex.match?(~r/\.json$/, path) -> File.read!(path) |> Poison.decode!(as: [%{}])
-        true -> []
-      end
-    end)
-    |> Enum.concat
+  def init do
+    Ets.new(@table, [:set, :protected, :named_table])
   end
 
   @doc """
-  Read a `tag_list` into a map, keyed by "id"
+  Create or update a tag
+  ## Examples
+    iex> Tagcursion.init
+    iex> Tagcursion.save %{"id" => "foo"}
+    :true
   """
-  def tag_list_to_map(tag_list) do
-    Enum.into(tag_list, %{}, &({&1["id"], &1}))
-  end
-
-  def reduce_tags(tag_store, tag, acc \\ [])
-
-  @doc """
-  Collect a list of tags from a tag's related tag_ids
-  """
-  def reduce_tags(tag_store, tag, acc) when is_map(tag),
-  do: reduce_tags(tag_store, Map.get(tag, "tags", []), acc)
-
-  @doc """
-  Collect a list of tags from a list of `tag_ids`
-  """
-  def reduce_tags(tag_store, tag_ids, acc) when is_list(tag_ids) do
-    tag_ids
-    |> Enum.reverse
-    |> Enum.reduce(acc, &(reduce_tags(tag_store, &1, &2)))
+  def save(tag) do
+    Ets.insert(@table, dehydrate(tag))
   end
 
   @doc """
-  Collect a list of tags referenced by a `tag_id`
+  Fetch a (hydrated) tag by it's fully-qualified id
+  ## Examples
+    iex> Tagcursion.init
+    iex> Tagcursion.save %{"id" => "foo"}
+    iex> Tagcursion.read "foo"
+    %{"id" => "foo", "tags" => %{}}
   """
-  def reduce_tags(tag_store, tag_id, acc) when is_bitstring(tag_id) do
-    tag = Map.fetch!(tag_store, tag_id)
-    [tag | reduce_tags(tag_store, tag, acc)]
+  def read(id) do
+    case Ets.lookup(@table, id) do
+      [tag] -> hydrate(tag)
+      _ -> nil
+    end
   end
 
-  def filter_tags(tag_store, regex) do
-    Enum.filter(tag_store, fn({id, _tag}) -> Regex.match?(regex, id) end) |> Enum.into(%{})
+  @doc """
+  Hydrate a tag to a map from its Ets-friendly struct
+  ## Examples
+    iex> Tagcursion.init
+    iex> Tagcursion.save %{"id" => "foo"}
+    iex> Tagcursion.hydrate {"bar", %{"name" => "Bar"}, ["foo"]}
+    %{"id" => "bar", "name" => "Bar", "tags" => %{"foo" => %{"id" => "foo", "tags" => %{}}}}
+  """
+  def hydrate({id, props, tags}) do
+    props
+    |> Map.put("id", id)
+    |> Map.put("tags", Enum.into(tags, %{}, &({&1, read(&1)})))
+  end
+
+  @doc """
+  Dehydrate a tag from map to an Ets-friendly tuple
+  ## Examples
+    iex> Tagcursion.dehydrate %{"id" => "bar", "name" => "Bar", "tags" => %{"foo" => %{"id" => "foo", "tags" => %{}}}}
+    {"bar", %{"name" => "Bar"}, ["foo"]}
+  """
+  def dehydrate(tag) do
+    id = Map.fetch!(tag, "id")
+    props = Map.drop(tag, ["id", "tags"])
+    tags = Map.get(tag, "tags", %{})
+    |> Map.values
+    |> Enum.map(&(Map.fetch!(&1, "id")))
+
+    {id, props, tags}
+  end
+
+  @doc """
+  List the stored tag ids
+  ## Examples
+    iex> Tagcursion.init
+    iex> Tagcursion.save %{"id" => "foo"}
+    iex> Tagcursion.save %{"id" => "bar"}
+    iex> Tagcursion.keys
+    ["foo", "bar"]
+  """
+  def keys() do
+    first = Ets.first(@table)
+    keys(first, [first])
+  end
+
+  defp keys(:"$end_of_table", [:"$end_of_table"|acc]), do: acc
+
+  defp keys(currentKey, acc) do
+    next = Ets.next(@table, currentKey)
+    keys(next, [next|acc])
   end
 end
