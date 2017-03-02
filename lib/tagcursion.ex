@@ -3,6 +3,19 @@ defmodule Tagcursion do
   @table :tags
 
   @doc """
+  ## Examples
+    iex> Tagcursion.read_json("data/foobar.json")
+    [{"Foo", %{}, ["Bar"]}, {"Bar", %{"prop1" => "a"}, []}]
+  """
+  def read_json(path) do
+    cond do
+      File.dir?(path) -> File.ls!(path) |> Enum.flat_map(&(read_json(path <> "/" <> &1)))
+      Regex.match?(~r/\.json$/, path) -> File.read!(path) |> Poison.decode!(as: [%{}]) |> Enum.map(&dehydrate/1)
+      true -> [] 
+    end
+  end
+
+  @doc """
   Initialize the Erlang Term Storage table to hold tags.
   ## Examples
     iex> Tagcursion.init
@@ -19,8 +32,16 @@ defmodule Tagcursion do
     iex> Tagcursion.save %{"id" => "foo"}
     :true
   """
-  def save(tag) do
-    Ets.insert(@table, dehydrate(tag))
+  def save(tag) when is_map(tag), do: tag |> dehydrate |> save
+
+  @doc """
+  ## Examples
+    iex> Tagcursion.init
+    iex> Tagcursion.save {"foo", %{}, []}
+    :true
+  """
+  def save(tag) when is_tuple(tag) do
+    Ets.insert(@table, tag)
   end
 
   @doc """
@@ -68,8 +89,10 @@ defmodule Tagcursion do
     id = Map.fetch!(tag, "id")
     props = Map.drop(tag, ["id", "tags"])
     tags = Map.get(tag, "tags", %{})
-    |> Map.values
-    |> Enum.map(&(Map.fetch!(&1, "id")))
+    tags = cond do
+      is_map(tags) -> Map.values(tags) |> Enum.map(&(Map.fetch!(&1, "id")))
+      is_list(tags) -> tags
+    end
 
     {id, props, tags}
   end
