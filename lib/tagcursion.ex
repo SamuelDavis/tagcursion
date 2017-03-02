@@ -20,8 +20,9 @@ defmodule Tagcursion do
   Examples don't work because doc can't parse json-encoded strings super well.
   The returned structure is:
   %{
-    "tags.some.namespace" => "json_encoded_list_of_tags",
-    "tags.some.other.namespace" => "another_json_encoded_list_of_tags",
+    "tags.json" => "top_level_encoded_tags",
+    "tags/some/namespace.json" => "json_encoded_list_of_tags",
+    "tags/some/other/namespace.json" => "another_json_encoded_list_of_tags",
     ...
   }
   """
@@ -33,7 +34,7 @@ defmodule Tagcursion do
       stored_tags = Map.get(acc, path, [])
       Map.put(acc, path, stored_tags ++ [dehydrate_relations(tag)])
     end)
-    |> Enum.map(fn {namespace, tags} -> {namespace, Poison.encode!(tags)} end)
+    |> Enum.map(fn {namespace, tags} -> {String.replace(namespace, ".", "/") <> ".json", Poison.encode!(tags)} end)
     |> Enum.into(%{})
   end
 
