@@ -44,7 +44,13 @@ defmodule Tagcursion do
     iex> Tagcursion.init
     iex> Tagcursion.save %{"id" => "foo"}
     iex> Tagcursion.hydrate {"bar", %{"name" => "Bar"}, ["foo"]}
-    %{"id" => "bar", "name" => "Bar", "tags" => %{"foo" => %{"id" => "foo", "tags" => %{}}}}
+    %{
+      "id" => "bar",
+      "name" => "Bar",
+      "tags" => %{
+        "foo" => %{"id" => "foo", "tags" => %{}}
+      }
+    }
   """
   def hydrate({id, props, tags}) do
     props
@@ -66,6 +72,36 @@ defmodule Tagcursion do
     |> Enum.map(&(Map.fetch!(&1, "id")))
 
     {id, props, tags}
+  end
+
+  @doc """
+  Reduce a tag and its recursive relations to a list
+  ## Examples
+    iex> Tagcursion.flatten %{"id" => "qux", "tags" => %{"bar" => %{"id" => "bar", "tags" => %{"foo" => %{"id" => "foo"}}}}}
+    [
+      %{
+        "id" => "qux",
+        "tags" => %{
+          "bar" => %{
+            "id" => "bar",
+            "tags" => %{"foo" => %{"id" => "foo"}}
+          }
+        }
+      },
+      %{
+        "id" => "bar",
+        "tags" => %{
+          "foo" => %{"id" => "foo"}
+        }
+      },
+      %{"id" => "foo"}
+    ]
+  """
+  def flatten(tag) do
+    tag
+    |> Map.get("tags", %{})
+    |> Map.values
+    |> Enum.reduce([tag], &(&2 ++ flatten(&1)))
   end
 
   @doc """
