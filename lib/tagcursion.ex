@@ -16,6 +16,28 @@ defmodule Tagcursion do
   end
 
   @doc """
+  Convert a list of ids to a list of json-writable data blobs keyed by namespace
+  Examples don't work because doc can't parse json-encoded strings super well.
+  The returned structure is:
+  %{
+    "tags.some.namespace" => "json_encoded_list_of_tags",
+    "tags.some.other.namespace" => "another_json_encoded_list_of_tags",
+    ...
+  }
+  """
+  def to_json(ids) do
+    ids
+    |> Enum.map(&(Regex.run(~r/^([a-z0-9\.]+)\.([a-z0-9]+)$/, "tags." <> &1)))
+    |> Enum.reduce(%{}, fn ([id, path, _name], acc) ->
+      tag = read(String.replace(id, ~r/^tags\./, ""))
+      stored_tags = Map.get(acc, path, [])
+      Map.put(acc, path, stored_tags ++ [dehydrate_relations(tag)])
+    end)
+    |> Enum.map(fn {namespace, tags} -> {namespace, Poison.encode!(tags)} end)
+    |> Enum.into(%{})
+  end
+
+  @doc """
   Initialize the Erlang Term Storage table to hold tags.
   ## Examples
     iex> Tagcursion.init
@@ -95,6 +117,18 @@ defmodule Tagcursion do
     end
 
     {id, props, tags}
+  end
+
+  @doc """
+  Convert a tags' nested "tags" relation to a flat list of ids
+  ## Examples
+    iex> Tagcursion.dehydrate_relations %{"id" => "bar", "tags" => %{"foo" => %{"id" => "foo", "tags" => %{}}}}
+    %{"id" => "bar", "tags" => ["foo"]}
+  """
+
+  def dehydrate_relations(tag) do
+    ids = Map.get(tag, "tags", %{}) |> Map.keys
+    Map.put(tag, "tags", ids)
   end
 
   @doc """
