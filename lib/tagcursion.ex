@@ -28,14 +28,14 @@ defmodule Tagcursion do
   """
   def to_json(ids) do
     ids
-    |> Enum.map(&(Regex.run(~r/^([a-z0-9\.]+)\.([a-z0-9]+)$/, "tags." <> &1)))
-    |> Enum.reduce(%{}, fn ([id, path, _name], acc) ->
-      tag = read(String.replace(id, ~r/^tags\./, ""))
-      stored_tags = Map.get(acc, path, [])
-      Map.put(acc, path, stored_tags ++ [dehydrate_relations(tag)])
+    |> Enum.map(&(String.split(&1, ".")))
+    |> Enum.reduce(%{}, fn (parts, acc) ->
+      filename = Enum.at(parts, -2, "tags") <> ".json"
+      directory = Enum.drop(parts, -2) |> Enum.join("/")
+      namespace = Enum.drop(parts, -1) |> Enum.join(".")
+      tag = Enum.join(parts, ".") |> read |> dehydrate_relations |> Poison.encode!
+      Map.put(acc, namespace, {directory, filename, tag})
     end)
-    |> Enum.map(fn {namespace, tags} -> {String.replace(namespace, ".", "/") <> ".json", Poison.encode!(tags)} end)
-    |> Enum.into(%{})
   end
 
   @doc """
