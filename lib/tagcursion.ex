@@ -41,6 +41,20 @@ defmodule Tagcursion do
   end
 
   @doc """
+  Write `to_json`'d data to local filesystem
+  """
+  def store_json(data, prefix \\ "./")
+
+  def store_json({path, file, json}, prefix) do
+    File.mkdir_p!(prefix <> path)
+    File.write!(prefix <> path <> "/" <> file, json)
+  end
+
+  def store_json(json_tuples, prefix) when is_list(json_tuples) do
+    Enum.map(json_tuples, &(store_json(&1, prefix)))
+  end
+
+  @doc """
   Initialize the Erlang Term Storage table to hold tags.
   ## Examples
     iex> Tagcursion.init
