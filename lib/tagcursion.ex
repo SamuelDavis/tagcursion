@@ -33,9 +33,11 @@ defmodule Tagcursion do
       filename = Enum.at(parts, -2, "tags") <> ".json"
       directory = Enum.drop(parts, -2) |> Enum.join("/")
       namespace = Enum.drop(parts, -1) |> Enum.join(".")
-      tag = Enum.join(parts, ".") |> read |> dehydrate_relations |> Poison.encode!
-      Map.put(acc, namespace, {directory, filename, tag})
+      tag = Enum.join(parts, ".") |> read |> dehydrate_relations
+      tags = Map.get(acc, namespace, {"_", "_", []}) |> elem(2)
+      Map.put(acc, namespace, {directory, filename, tags ++ [tag]})
     end)
+    |> Enum.map(fn {_key, {directory, filename, tags}} -> {directory, filename, tags |> Poison.encode!} end)
   end
 
   @doc """
