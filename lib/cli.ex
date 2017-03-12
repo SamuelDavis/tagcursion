@@ -20,4 +20,13 @@ defmodule Tagcursion.Cli do
       _ -> props
     end
   end
+
+  def build_tags(tag_map \\ %{}) do
+    tag = build_tag()
+    tag_map = Map.put(tag_map, tag["id"], tag)
+    case IO.gets("Stop? ") do
+      "y\n" -> tag_map
+      _ -> build_tags(tag_map)
+    end
+  end
 end
