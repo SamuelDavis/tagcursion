@@ -31,7 +31,7 @@ defmodule Tagcursion.Cli do
   defp read_prop(prompt \\ "Prop", default \\ "")
   defp read_prop(prompt, nil), do: read_prop(prompt, "")
   defp read_prop(prompt, default) do
-    case String.trim(IO.gets("#{prompt} [#{default}]: ")) do
+    case IO.gets("#{prompt} [#{default}]: ") |> String.trim do
       "" -> default
       input -> input
     end
