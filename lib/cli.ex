@@ -1,16 +1,37 @@
 defmodule Tagcursion.Cli do
-  def build_tag() do
+  def build_tag(tag_map \\ %{}) do
+    id = read_prop("id")
+
+    default = Map.get(tag_map, id, %{})
+    default_effects = Map.get(default, "effects", []) |> Enum.join(";")
+    default_tags = Map.get(default, "tags", []) |> Enum.join(";")
+
+    if default !== %{} do
+      IO.puts "Default:"
+      IO.inspect default
+    end
+
     %{
-      "id" => read_prop("Id"),
-      "name" => read_prop("Name"),
-      "desc" => read_prop("Description"),
-      "effects" => read_prop("Effects") |> String.split(";"),
-      "tags" => read_prop("Tags") |> String.split(";")
+      "id" => id,
+      "name" => read_prop("name", default["name"]),
+      "desc" => read_prop("desc", default["desc"]),
+      "effects" => read_prop("effects", default_effects) |> String.split(";"),
+      "tags" => read_prop("tags", default_tags) |> String.split(";")
     }
     |> Enum.into(read_props())
+    |> Enum.into(default)
+    |> Enum.reject(fn ({_key, val}) -> val == "" or val == [""] end)
+    |> Enum.into(%{})
   end
 
-  defp read_prop(prompt \\ "Prop"), do: String.trim(IO.gets(prompt <> ": "))
+  defp read_prop(prompt \\ "Prop", default \\ "")
+  defp read_prop(prompt, nil), do: read_prop(prompt, "")
+  defp read_prop(prompt, default) do
+    case String.trim(IO.gets("#{prompt} [#{default}]: ")) do
+      "" -> default
+      input -> input
+    end
+  end
 
   defp read_props(props \\ %{}) do
     case read_prop() |> String.split("=") do
@@ -22,7 +43,8 @@ defmodule Tagcursion.Cli do
   end
 
   def build_tags(tag_map \\ %{}) do
-    tag = build_tag()
+    tag = build_tag(tag_map)
+    IO.inspect(tag)
     tag_map = Map.put(tag_map, tag["id"], tag)
     case IO.gets("Stop? ") do
       "y\n" -> tag_map
