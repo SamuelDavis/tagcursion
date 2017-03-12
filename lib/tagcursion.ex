@@ -1,57 +1,40 @@
 defmodule Tagcursion do
   @moduledoc """
-  Tagcursion is the gateway for aggregating  structs
+  Tagcursion is a gateway for aggregating maps.
   """
 
-  @doc """
-  Collect a list of tags into a map from the `data_dir` directory path
-  """
-  def read_json_dir(data_dir \\ "data/") do
-    data_dir
-    |> File.ls!
-    |> Stream.map(fn filename -> path = data_dir <> filename
-      cond do
-        File.dir?(path) -> read_json_dir(path <> "/")
-        Regex.match?(~r/\.json$/, path) -> File.read!(path) |> Poison.decode!(as: [%{}])
-        true -> []
-      end
-    end)
-    |> Enum.concat
+  def reduce_prop(_tag_map, _prop, []), do: []
+  def reduce_prop(_tag_map, _prop, source) when is_nil(source), do: []
+  def reduce_prop(tag_map, prop, source) when is_list(source),
+    do: Enum.flat_map(source, &(reduce_prop(tag_map, prop, &1)))
+  def reduce_prop(tag_map, prop, source) when is_bitstring(source),
+    do: reduce_prop(tag_map, prop, get_tags(tag_map, source))
+  def reduce_prop(tag_map, prop, source) do
+    IO.inspect prop
+    [source[prop]] ++ reduce_prop(tag_map, prop, source["tags"])
+    |> Enum.flat_map(&(format(tag_map, &1)))
+    |> Enum.reject(&is_nil/1)
   end
 
-  @doc """
-  Read a `tag_list` into a map, keyed by "id"
-  """
-  def tag_list_to_map(tag_list) do
-    Enum.into(tag_list, %{}, &({&1["id"], &1}))
+  def format(tag_map, item) when is_list(item),
+    do: Enum.flat_map(item, &(format(tag_map, &1)))
+  def format(tag_map, item) when is_bitstring(item) do
+    if String.starts_with?(item, "tags."),
+      do: get_tags(tag_map, item),
+      else: [template(tag_map, item)]
   end
+  def format(_tag_map, item), do: [item]
 
-  def reduce_tags(tag_store, tag, acc \\ [])
+  def template(_tag_map, text), do: text
 
-  @doc """
-  Collect a list of tags from a tag's related tag_ids
-  """
-  def reduce_tags(tag_store, tag, acc) when is_map(tag),
-  do: reduce_tags(tag_store, Map.get(tag, "tags", []), acc)
+  def get_tags(tag_map, id) do
+    regex = id
+    |> String.replace(".", "\.")
+    |> String.replace("*", "[a-z_]+")
+    |> Regex.compile!
 
-  @doc """
-  Collect a list of tags from a list of `tag_ids`
-  """
-  def reduce_tags(tag_store, tag_ids, acc) when is_list(tag_ids) do
-    tag_ids
-    |> Enum.reverse
-    |> Enum.reduce(acc, &(reduce_tags(tag_store, &1, &2)))
-  end
-
-  @doc """
-  Collect a list of tags referenced by a `tag_id`
-  """
-  def reduce_tags(tag_store, tag_id, acc) when is_bitstring(tag_id) do
-    tag = Map.fetch!(tag_store, tag_id)
-    [tag | reduce_tags(tag_store, tag, acc)]
-  end
-
-  def filter_tags(tag_store, regex) do
-    Enum.filter(tag_store, fn({id, _tag}) -> Regex.match?(regex, id) end) |> Enum.into(%{})
+    tag_map
+    |> Map.values()
+    |> Enum.filter(&(Regex.match?(regex, &1["id"])))
   end
 end
