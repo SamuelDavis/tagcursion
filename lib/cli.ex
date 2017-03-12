@@ -1,4 +1,8 @@
 defmodule Tagcursion.Cli do
+  @moduledoc """
+  Tagcursion.Cli is the gateway for generating tags and tag_maps.
+  """
+
   def build_tag(tag_map \\ %{}) do
     id = read_prop("id")
 
