@@ -24,7 +24,11 @@ defmodule Tagcursion.Cli do
     }
     |> Enum.into(read_props())
     |> Enum.into(default)
-    |> Enum.reject(fn ({_key, val}) -> val == "" or val == [""] end)
+    |> Enum.reject(fn ({_key, val}) -> cond do
+      is_list(val) -> Enum.reject(val, &(&1 == "")) == []
+      is_bitstring(val) -> val == ""
+      true -> false
+    end end)
     |> Enum.into(%{})
   end
 
