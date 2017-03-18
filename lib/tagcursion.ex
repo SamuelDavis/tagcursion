@@ -11,8 +11,8 @@ defmodule Tagcursion do
     do: reduce_prop(tag_map, prop, get_tags(tag_map, source))
   def reduce_prop(tag_map, prop, source) do
     [{source["id"], source[prop]}] ++ reduce_prop(tag_map, prop, source["tags"])
-    |> Enum.flat_map(&(format(tag_map, &1)))
-    |> Enum.reject(&is_nil/1)
+    |> Enum.map(fn {id, val} -> {id, format(tag_map, val)} end)
+    |> Enum.reject(fn {_id, [val|_rest]} -> is_nil(val) end)
   end
 
   def format(tag_map, item) when is_list(item),
@@ -27,10 +27,10 @@ defmodule Tagcursion do
 
   def template(_tag_map, text), do: text
 
-  def get_tags(tag_map, id) do
+  def get_tags(tag_map, id) when is_bitstring(id) do
     tag_map
-    |> search(id)
-    |> Enum.map(&(tag_map[&1]))
+      |> search(id)
+      |> Enum.map(&(tag_map[&1]))
   end
 
   def search(tag_map, id) do
