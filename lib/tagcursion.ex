@@ -11,7 +11,7 @@ defmodule Tagcursion do
     do: reduce_prop(tag_map, prop, get_tags(tag_map, source))
   def reduce_prop(tag_map, prop, source) do
     IO.inspect prop
-    [source[prop]] ++ reduce_prop(tag_map, prop, source["tags"])
+    [{source["id"], source[prop]}] ++ reduce_prop(tag_map, prop, source["tags"])
     |> Enum.flat_map(&(format(tag_map, &1)))
     |> Enum.reject(&is_nil/1)
   end
@@ -19,22 +19,30 @@ defmodule Tagcursion do
   def format(tag_map, item) when is_list(item),
     do: Enum.flat_map(item, &(format(tag_map, &1)))
   def format(tag_map, item) when is_bitstring(item) do
-    if String.starts_with?(item, "tags."),
-      do: get_tags(tag_map, item),
-      else: [template(tag_map, item)]
+    cond do
+      String.starts_with?(item, "tags.") -> get_tags(tag_map, item)
+      true -> [template(tag_map, item)]
+    end
   end
   def format(_tag_map, item), do: [item]
 
   def template(_tag_map, text), do: text
 
   def get_tags(tag_map, id) do
+    tag_map
+    |> search(id)
+    |> Enum.map(&(tag_map[&1]))
+  end
+
+  def search(tag_map, id) do
     regex = id
     |> String.replace(".", "\.")
-    |> String.replace("*", "[a-z_]+")
+    |> String.replace("**", "[a-z_\.]+$")
+    |> String.replace("*", "[a-z_]+$")
     |> Regex.compile!
 
     tag_map
-    |> Map.values()
-    |> Enum.filter(&(Regex.match?(regex, &1["id"])))
+    |> Map.keys()
+    |> Enum.filter(&(Regex.match?(regex, &1)))
   end
 end
