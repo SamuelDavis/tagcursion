@@ -10,7 +10,6 @@ defmodule Tagcursion do
   def reduce_prop(tag_map, prop, source) when is_bitstring(source),
     do: reduce_prop(tag_map, prop, get_tags(tag_map, source))
   def reduce_prop(tag_map, prop, source) do
-    IO.inspect prop
     [{source["id"], source[prop]}] ++ reduce_prop(tag_map, prop, source["tags"])
     |> Enum.flat_map(&(format(tag_map, &1)))
     |> Enum.reject(&is_nil/1)
