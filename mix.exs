@@ -29,7 +29,8 @@ defmodule Tagcursion.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:poison, "~> 3.0"}
+      {:poison, "~> 3.0"},
+      {:slack, "~> 0.11.0"}
     ]
   end
 end
