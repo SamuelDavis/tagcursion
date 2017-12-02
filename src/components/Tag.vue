@@ -1,6 +1,8 @@
 <template>
     <ul class="deck">
-        <li class="card" v-on:dblclick="addChild">{{_id}} <span v-if="count > 1">({{count}})</span></li>
+        <li class="card" v-bind:class="{selected:selected}" v-on:dblclick="addChild" v-on:click="select">
+            {{_id}} <span v-if="count > 1">({{count}})</span>
+        </li>
         <li v-for="(count, _id) in children" :key="_id">
             <tag :count="count" :_id="_id"></tag>
         </li>
@@ -21,11 +23,17 @@
             }
         },
         computed: {
+            selected() {
+                return this.$store.state.selected === this._id;
+            },
             children() {
                 return this.$store.getters.tagCounts(this._id);
             }
         },
         methods: {
+            select() {
+                this.$store.commit('setSelected', {selected: this._id});
+            },
             addChild() {
                 let [_id, count] = (prompt('Name?') || '').split('|');
                 _id = _id.trim();
@@ -38,6 +46,12 @@
         }
     };
 </script>
+
+<style scoped>
+    .selected {
+        background-color: lightgreen;
+    }
+</style>
 
 <style>
     .deck {

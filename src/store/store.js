@@ -19,6 +19,7 @@ function findRecursion(child, parent, tags) {
 
 export const store = new Vuex.Store({
     state: {
+        selected: null,
         tags: [
             // t1
             {_id: 'Thud', children: ['Etc']},
@@ -51,6 +52,9 @@ export const store = new Vuex.Store({
         }
     },
     mutations: {
+        setSelected(state, {selected}) {
+            state.selected = selected;
+        },
         addTag({tags}, {_id, parent, count = 1}) {
             const recursion = findRecursion(_id, parent, tags);
             if (recursion) {
