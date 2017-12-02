@@ -1,3 +1,4 @@
+import TagRepo from './../services/TagRepo';
 import Vue from 'vue';
 import Vuex from 'vuex';
 
@@ -55,19 +56,30 @@ export const store = new Vuex.Store({
         setSelected(state, {selected}) {
             state.selected = selected;
         },
-        addTag({tags}, {_id, parent, count = 1}) {
-            const recursion = findRecursion(_id, parent, tags);
-            if (recursion) {
-                return alert(
-                    recursion === _id
-                        ? `Cannot make ${_id} a child of itself without infinite recursion.`
-                        : `${_id} is a parent of ${recursion}, leading to infinite recursion.`
-                );
-            }
-            if (!tags.find(tag => tag._id === _id)) {
-                tags.push(nullTag(_id));
-            }
-            nullTag(parent, tags).children.push(...new Array(count).fill(_id));
+        addTag(state, {_id, parent, count = 1}) {
+            TagRepo
+                .fetch()
+                .then(tags => {
+                    const recursion = findRecursion(_id, parent, tags);
+                    if (recursion) {
+                        return alert(
+                            recursion === _id
+                                ? `Cannot make ${_id} a child of itself without infinite recursion.`
+                                : `${_id} is a parent of ${recursion}, leading to infinite recursion.`
+                        );
+                    }
+
+                    return TagRepo
+                        .persist(nullTag(_id, tags))
+                        .then(() => {
+                            const parentTag = nullTag(parent, tags);
+                            parentTag.children.push(...new Array(count).fill(_id));
+                            return TagRepo.persist(parentTag);
+                        });
+                });
         }
     }
 });
+
+TagRepo.fetch().then(tags => store.state.tags = tags);
+TagRepo.onChange(() => TagRepo.fetch().then(tags => store.state.tags = tags));
