@@ -1,33 +1,44 @@
 <template>
     <ul class="deck">
         <li class="card">{{tag.name}} <span v-if="count > 1">({{count}})</span></li>
-        <li v-for="(child, i) in uniqueChildren" :key="i">
-            <tag :tag="child.tag" :count="child.count"></tag>
+        <li v-for="(child, name) in children" :key="name">
+            <tag :count="child.count" :tag="child.tag"></tag>
         </li>
     </ul>
 </template>
 
 <script>
+    import {store} from './../store/store';
+
     export default {
+        store,
         name: "tag",
         props: {
-            tag: Object,
+            tag: {
+                type: Object,
+                default: {
+                    name: '???',
+                    children: []
+                }
+            },
             count: {
                 type: Number,
                 default: 1
             }
         },
+        data() {
+            return {active: false};
+        },
         computed: {
-            uniqueChildren: function () {
-                const children = this.tag.children.reduce((acc, tag) => {
-                    acc[tag.name] = acc[tag.name] || {
-                        tag, count: 0
+            children() {
+                return this.tag.children.reduce((acc, name) => {
+                    acc[name] = acc[name] || {
+                        tag: this.$store.state.tags[name],
+                        count: 0
                     };
-                    acc[tag.name].count++;
+                    acc[name].count++;
                     return acc;
                 }, {});
-
-                return Object.values(children);
             }
         }
     };
