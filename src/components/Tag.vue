@@ -1,10 +1,14 @@
 <template>
     <ul class="deck">
-        <li class="card" v-bind:class="{selected:selected}" v-on:dblclick="addChild" v-on:click="select">
+        <li class="card"
+            v-bind:style="{'z-index':z}"
+            v-bind:class="{selected:selected}"
+            v-on:dblclick="addChild"
+            v-on:click="select">
             {{_id}} <span v-if="count > 1">({{count}})</span>
         </li>
-        <li v-for="(count, _id) in children" :key="_id">
-            <tag :count="count" :_id="_id"></tag>
+        <li v-for="child in children" :key="child._id">
+            <tag v-bind:z="child.z" :count="child.count" :_id="child._id"></tag>
         </li>
     </ul>
 </template>
@@ -17,6 +21,10 @@
         name: "tag",
         props: {
             _id: String,
+            z: {
+                type: Number,
+                default: 0
+            },
             count: {
                 type: Number,
                 default: 1
@@ -27,7 +35,14 @@
                 return this.$store.state.selected === this._id;
             },
             children() {
-                return this.$store.getters.tagCounts(this._id);
+                const children = this.$store.getters.tagCounts(this._id);
+                return Object.keys(children).map((_id, i) => {
+                    return {
+                        _id,
+                        z: this.z - 1 - i,
+                        count: children[_id]
+                    };
+                });
             }
         },
         methods: {
@@ -59,7 +74,9 @@
     }
 
     .card {
-        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+        position: relative;
+        margin-bottom: -3px;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.4);
         padding: 2px 16px;
         float: left;
         clear: both;
@@ -70,6 +87,7 @@
     }
 
     .card:hover {
-        box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.4);
+        box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.8);
+        z-index: 999 !important;
     }
 </style>

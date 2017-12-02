@@ -1,6 +1,7 @@
 <template>
     <div id="id">
-        <tag v-for="(count, _id) in children" v-bind:key="_id" v-bind:_id="_id" v-bind:count="count"></tag>
+        <tag v-for="child in children" v-bind:key="child._id" v-bind:_id="child._id" v-bind:count="child.count"
+             v-bind:z="child.z"></tag>
     </div>
 </template>
 
@@ -14,7 +15,13 @@
         components: {Tag},
         computed: {
             children() {
-                return this.$store.getters.tagCounts();
+                const children = this.$store.getters.tagCounts(this._id);
+                const length = Object.values(children).length;
+                return Object.keys(children).map((_id, i) => ({
+                    _id,
+                    z: length - i,
+                    count: children[_id]
+                }));
             }
         }
     };
