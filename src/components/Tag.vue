@@ -1,8 +1,8 @@
 <template>
     <ul class="deck">
-        <li class="card">{{tag.name}} <span v-if="count > 1">({{count}})</span></li>
-        <li v-for="(child, name) in children" :key="name">
-            <tag :count="child.count" :tag="child.tag"></tag>
+        <li class="card" v-on:dblclick="addChild">{{_id}} <span v-if="count > 1">({{count}})</span></li>
+        <li v-for="(count, _id) in children" :key="_id">
+            <tag :count="count" :_id="_id"></tag>
         </li>
     </ul>
 </template>
@@ -14,31 +14,26 @@
         store,
         name: "tag",
         props: {
-            tag: {
-                type: Object,
-                default: {
-                    name: '???',
-                    children: []
-                }
-            },
+            _id: String,
             count: {
                 type: Number,
                 default: 1
             }
         },
-        data() {
-            return {active: false};
-        },
         computed: {
             children() {
-                return this.tag.children.reduce((acc, name) => {
-                    acc[name] = acc[name] || {
-                        tag: this.$store.state.tags[name],
-                        count: 0
-                    };
-                    acc[name].count++;
-                    return acc;
-                }, {});
+                return this.$store.getters.tagCounts(this._id);
+            }
+        },
+        methods: {
+            addChild() {
+                let [_id, count] = (prompt('Name?') || '').split('|');
+                _id = _id.trim();
+                count = parseInt(count, 10) || 1;
+
+                if (_id) {
+                    this.$store.commit('addTag', {_id, parent: this._id, count});
+                }
             }
         }
     };

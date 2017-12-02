@@ -1,6 +1,6 @@
 <template>
     <div id="id">
-        <tag v-for="(tag, name) in tags" v-bind:key="name" v-bind:tag="tag"></tag>
+        <tag v-for="(count, _id) in children" v-bind:key="_id" v-bind:_id="_id" v-bind:count="count"></tag>
     </div>
 </template>
 
@@ -13,8 +13,8 @@
         name: 'app',
         components: {Tag},
         computed: {
-            tags() {
-                return this.$store.state.tags;
+            children() {
+                return this.$store.getters.tagCounts();
             }
         }
     };
