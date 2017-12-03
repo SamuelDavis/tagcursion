@@ -9,7 +9,10 @@
 </head>
 <body>
 <span id="app"></span>
-<script>window.log = console.log.bind(console);</script>
+<script>window.log = function () {
+    console.log(...arguments);
+    return arguments[0];
+};</script>
 <script src="build/main.js"></script>
 </body>
 </html>

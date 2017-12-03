@@ -1,7 +1,13 @@
 <template>
-    <div id="id">
-        <tag v-for="child in children" v-bind:key="child._id" v-bind:_id="child._id" v-bind:count="child.count"
-             v-bind:z="child.z"></tag>
+    <div id="id" class="container">
+        <div class="row">
+            <div class="col-xs-6">
+                <tag></tag>
+            </div>
+            <div class="col-xs-6">
+
+            </div>
+        </div>
     </div>
 </template>
 
@@ -12,17 +18,6 @@
     export default {
         store,
         name: 'app',
-        components: {Tag},
-        computed: {
-            children() {
-                const children = this.$store.getters.tagCounts(this._id);
-                const length = Object.values(children).length;
-                return Object.keys(children).map((_id, i) => ({
-                    _id,
-                    z: length - i,
-                    count: children[_id]
-                }));
-            }
-        }
+        components: {Tag}
     };
 </script>
