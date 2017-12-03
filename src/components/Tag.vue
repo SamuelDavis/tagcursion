@@ -1,14 +1,15 @@
 <template>
     <span>
-    <div class="card" v-bind:style="style" v-on:click="toggle">
+    <div class="card" v-bind:style="style">
         <div class="card-body">
             {{model._id}}
             <span v-if="count > 1">({{count}})</span>
-            <button class="btn btn-primary" v-on:click="addChild">+</button>
-            <button class="btn btn-danger" v-if="model._id" v-on:click="removeTag">x</button>
+            <span v-html="addChildIcon" v-on:click="addChild"></span>
+            <span v-html="removeTagIcon" v-if="model._id" v-on:click="removeTag"></span>
+            <span v-if="expandedIcon" v-html="expandedIcon" v-on:click="toggle">Test</span>
         </div>
     </div>
-        <tag v-for="(tag, i) in children"
+        <tag v-if="expanded" v-for="(tag, i) in children"
              :key="tag.model._id"
              :model="tag.model"
              :count="tag.count"
@@ -21,6 +22,7 @@
 
 <script>
     import {store} from './../store/store';
+    import octicons from 'octicons';
 
     export default {
         store,
@@ -58,6 +60,15 @@
             };
         },
         computed: {
+            removeTagIcon() {
+                return octicons.dash.toSVG();
+            },
+            addChildIcon() {
+                return octicons.plus.toSVG();
+            },
+            expandedIcon() {
+                return this.children.length && octicons[`triangle-${this.expanded ? 'down' : 'right'}`].toSVG();
+            },
             style() {
                 return {
                     'margin-left': `${this.parentCount * 2}vw`
@@ -68,10 +79,6 @@
             children: {
                 default: [],
                 get() {
-                    if (!this.expanded) {
-                        return Promise.resolve([]);
-                    }
-
                     return this.$store.getters
                         .getTags(this.model._id)
                         .then(tags => {
