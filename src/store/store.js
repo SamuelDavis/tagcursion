@@ -27,6 +27,9 @@ export const store = new Vuex.Store({
         addTag(context, {_id, parent = null, count = 1}) {
             return TagRepo.persist(_id, parent, count);
         },
+        editTag(context, {_id, newId = null, parent = null, count = null}) {
+            return TagRepo.edit(_id, newId, parent, count);
+        },
         removeTag(context, {_id, parent = null}) {
             return TagRepo.delete(_id, parent);
         }

@@ -4,8 +4,9 @@
         <div class="card-body">
             {{model._id}}
             <span v-if="count > 1">({{count}})</span>
+            <span v-if="model._id" v-html="editTagIcon" v-on:click="editTag"></span>
             <span v-html="addChildIcon" v-on:click="addChild"></span>
-            <span v-html="removeTagIcon" v-if="model._id" v-on:click="removeTag"></span>
+            <span v-if="model._id" v-html="removeTagIcon" v-on:click="removeTag"></span>
             <span v-if="expandedIcon" v-html="expandedIcon" v-on:click="toggle">Test</span>
         </div>
     </div>
@@ -60,6 +61,9 @@
             };
         },
         computed: {
+            editTagIcon() {
+                return octicons.pencil.toSVG();
+            },
             removeTagIcon() {
                 return octicons.dash.toSVG();
             },
@@ -81,13 +85,11 @@
                 get() {
                     return this.$store.getters
                         .getTags(this.model._id)
-                        .then(tags => {
-                            return Object.values(tags.reduce((acc, tag) => {
-                                acc[tag._id] = acc[tag._id] || {model: tag, count: 0};
-                                acc[tag._id].count++;
-                                return acc;
-                            }, {}));
-                        });
+                        .then(tags => Object.values(tags.reduce((acc, tag) => {
+                            acc[tag._id] = acc[tag._id] || {model: tag, count: 0};
+                            acc[tag._id].count++;
+                            return acc;
+                        }, {})));
                 }
             }
         },
@@ -103,6 +105,20 @@
                     this.$store
                         .dispatch('addTag', {_id, parent: this.model._id, count: parseInt(count, 10)})
                         .then(res => this.expanded = true);
+                }
+            },
+            editTag() {
+                const [_id, count = 1] = (prompt('Name?', `${this.model._id}|${this.count}`) || '')
+                    .split('|')
+                    .map(value => value.trim());
+                if (_id) {
+                    this.$store
+                        .dispatch('editTag', {
+                            _id: this.model._id,
+                            newId: _id,
+                            parent: this.parent,
+                            count: parseInt(count, 10)
+                        });
                 }
             },
             removeTag() {

@@ -23,12 +23,15 @@ export default class TagRepo {
         return db.get(_id);
     }
 
-    static persist(_id, parent = null, count = 1) {
+    static persist(_id, parent = null, count = 1, setCount = false) {
         if (parent) {
             return this
                 .persist(_id)
                 .then(tag => this.fetchById(parent)
                     .then(parent => {
+                        const children = parent.children.filter(child => child === _id).length;
+                        count = Math.max(0, setCount ? count : children + count);
+                        parent.children = parent.children.filter(child => child !== _id);
                         parent.children.push(...new Array(count).fill(_id));
                         return db.put(parent);
                     })
@@ -39,6 +42,29 @@ export default class TagRepo {
             .catch(err => db.put({_id, children: []}));
     }
 
+    static changeId(oldId, newId) {
+        if (oldId === newId) {
+            return Promise.resolve(newId);
+        }
+
+        return this
+            .persist(newId)
+            .then(tag => this.fetchAll())
+            .then(tags => db.bulkDocs(tags.map(tag => {
+                const count = tag.children.filter(child => child === oldId).length;
+                tag.children.push(...new Array(count).fill(newId));
+                return tag;
+            })))
+            .then(tags => this.delete(oldId))
+            .then(res => newId);
+    }
+
+    static edit(_id, newId = undefined, parent = undefined, count = undefined) {
+        return this
+            .changeId(_id, newId)
+            .then(id => (parent !== undefined && count !== undefined) ? this.persist(id, parent, count, true) : id);
+    }
+
     static delete(_id, parent = null) {
         if (parent) {
             return this
@@ -46,16 +72,16 @@ export default class TagRepo {
                 .then(parent => {
                     parent.children.splice(parent.children.indexOf(_id), 1);
                     return db.put(parent);
-                })
-                .catch(err => log(err, arguments));
+                });
         }
         return this
-            .fetchById(_id)
-            .then(tag => db.remove(tag))
-            .then(res => this.fetchAll()
-                .then(tags => db.bulkDocs(tags.map(tag => ({
-                    ...tag,
-                    children: tag.children.filter(child => child === tag)
-                })))));
+            .fetchAll()
+            .then(tags => db.bulkDocs(tags.map(parent => {
+                parent.children = parent.children.filter(child => child !== _id);
+                return parent;
+            })))
+            .then(tags => this.fetchById(_id))
+            .then(tag => db.remove(tag));
+
     }
 }
