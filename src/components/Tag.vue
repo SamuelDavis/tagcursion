@@ -69,7 +69,7 @@
         computed: {
             style() {
                 return {
-                    'margin-left': `${this.parentCount * 2}vw`
+                    'margin-left': `${this.parentCount * 10}vw`
                 };
             }
         },
