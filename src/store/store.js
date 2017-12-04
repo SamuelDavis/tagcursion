@@ -4,6 +4,14 @@ import TagRepo from './services/TagRepo';
 
 Vue.use(Vuex);
 
+function findTag(_id, tags) {
+    return tags.find(tag => tag._id === _id);
+}
+
+function findChildren(_id, tags) {
+    return (findTag(_id, tags) || {}).children || [];
+}
+
 export const store = new Vuex.Store({
     state: {
         revision: null,
@@ -16,11 +24,23 @@ export const store = new Vuex.Store({
     },
     getters: {
         getTags({tags}) {
-            return _id => Promise.resolve(
-                _id
-                    ? ((tags.find(tag => tag._id === _id) || {}).children || []).map(id => tags.find(tag => tag._id === id))
-                    : tags
-            );
+            return _id => {
+                return Promise.resolve(_id ? findChildren(_id, tags).map(id => findTag(id, tags)) : tags);
+            };
+        },
+        countDescendants({tags}) {
+            return _id => {
+                function recurseCountChildren(_id, counts = {}) {
+                    return findChildren(_id, tags).reduce((counts, childId) => {
+                        counts[childId] = (counts[childId] || 0) + 1;
+                        return recurseCountChildren(childId, counts);
+                    }, counts);
+                }
+
+                const counts = recurseCountChildren(_id);
+
+                return Promise.resolve(counts);
+            };
         }
     },
     actions: {

@@ -1,9 +1,13 @@
 <template>
     <span>
     <div class="card" v-bind:style="style">
-        <div class="card-body">
-            {{model._id}}
-            <span v-if="count > 1">({{count}})</span>
+        <div class="card-body" v-on:mouseover="focused=true" v-on:mouseout="focused=false">
+            <h4 class="card-title">{{model._id}} <span v-if="count > 1">({{count}})</span></h4>
+            <p class="card-text" v-if="focused && Object.keys(descendants).length">
+                <ul class="list-group">
+                    <li class="list-group-item" v-for="(count, descendant) in descendants">{{descendant}} ({{count}})</li>
+                </ul>
+            </p>
             <button class="btn btn-info" v-on:click="editTag">Edit</button>
             <button class="btn btn-primary" v-on:click="addChild">Add</button>
             <button class="btn btn-danger" v-on:click="removeTag">Remove</button>
@@ -58,7 +62,8 @@
         },
         data() {
             return {
-                expanded: false
+                expanded: false,
+                focused: false
             };
         },
         computed: {
@@ -79,6 +84,12 @@
                             acc[tag._id].count++;
                             return acc;
                         }, {})));
+                }
+            },
+            descendants: {
+                default: {},
+                get() {
+                    return this.$store.getters.countDescendants(this.model._id);
                 }
             }
         },
