@@ -1,14 +1,14 @@
 <template>
     <div>
-        <div class="card" v-bind:style="style" v-on:mouseover="focused=true" v-on:mouseout="focused=false">
-            <div class="card-header">
-                <h4 class="card-title">{{model._id}} <span v-if="count > 1">({{count}})</span></h4>
+        <div class="card" v-bind:style="style" @mouseover="focused=true" @mouseout="focused=false">
+            <div class="card-header" v-if="model._id">
+                {{model._id}} <span v-if="count > 1">({{count}})</span>
             </div>
             <div class="card-body">
-                <button class="btn btn-info" v-on:click="editTag">Edit</button>
-                <button class="btn btn-primary" v-on:click="addChild">Add</button>
-                <button class="btn btn-danger" v-on:click="removeTag">Del</button>
-                <button class="btn btn-info" v-if="children.length" v-on:click="toggle">
+                <button class="btn btn-info" v-if="model._id" @click="editTag">Edit</button>
+                <button class="btn btn-primary" @click="addChild">Add</button>
+                <button class="btn btn-danger" v-if="model._id" @click="removeTag">Del</button>
+                <button class="btn btn-info" v-if="children.length" @click="toggle">
                     {{expanded ? 'v' : '>'}}
                 </button>
             </div>

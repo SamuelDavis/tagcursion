@@ -1,13 +1,6 @@
 <template>
     <div id="id" class="container">
-        <div class="row">
-            <div class="col-xs-6">
-                <tag></tag>
-            </div>
-            <div class="col-xs-6">
-
-            </div>
-        </div>
+        <tag></tag>
     </div>
 </template>
 
