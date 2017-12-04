@@ -4,10 +4,12 @@
         <div class="card-body">
             {{model._id}}
             <span v-if="count > 1">({{count}})</span>
-            <span v-if="model._id" v-html="editTagIcon" v-on:click="editTag"></span>
-            <span v-html="addChildIcon" v-on:click="addChild"></span>
-            <span v-if="model._id" v-html="removeTagIcon" v-on:click="removeTag"></span>
-            <span v-if="expandedIcon" v-html="expandedIcon" v-on:click="toggle">Test</span>
+            <button class="btn btn-info" v-on:click="editTag">Edit</button>
+            <button class="btn btn-primary" v-on:click="addChild">Add</button>
+            <button class="btn btn-danger" v-on:click="removeTag">Remove</button>
+            <button class="btn btn-info" v-on:click="toggle" v-if="children.length">
+                {{expanded ? 'Collapse' : 'Expand'}}
+            </button>
         </div>
     </div>
         <tag v-if="expanded" v-for="(tag, i) in children"
@@ -23,7 +25,6 @@
 
 <script>
     import {store} from './../store/store';
-    import octicons from 'octicons';
 
     export default {
         store,
@@ -61,18 +62,6 @@
             };
         },
         computed: {
-            editTagIcon() {
-                return octicons.pencil.toSVG();
-            },
-            removeTagIcon() {
-                return octicons.dash.toSVG();
-            },
-            addChildIcon() {
-                return octicons.plus.toSVG();
-            },
-            expandedIcon() {
-                return this.children.length && octicons[`triangle-${this.expanded ? 'down' : 'right'}`].toSVG();
-            },
             style() {
                 return {
                     'margin-left': `${this.parentCount * 2}vw`
