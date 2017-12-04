@@ -1,30 +1,33 @@
 <template>
-    <span>
-    <div class="card" v-bind:style="style">
-        <div class="card-body" v-on:mouseover="focused=true" v-on:mouseout="focused=false">
-            <h4 class="card-title">{{model._id}} <span v-if="count > 1">({{count}})</span></h4>
-            <p class="card-text" v-if="focused && Object.keys(descendants).length">
+    <div>
+        <div class="card" v-bind:style="style" v-on:mouseover="focused=true" v-on:mouseout="focused=false">
+            <div class="card-header">
+                <h4 class="card-title">{{model._id}} <span v-if="count > 1">({{count}})</span></h4>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-info" v-on:click="editTag">Edit</button>
+                <button class="btn btn-primary" v-on:click="addChild">Add</button>
+                <button class="btn btn-danger" v-on:click="removeTag">Del</button>
+                <button class="btn btn-info" v-if="children.length" v-on:click="toggle">
+                    {{expanded ? 'v' : '>'}}
+                </button>
+            </div>
+            <div class="card-body" v-if="focused && Object.keys(descendants).length">
                 <ul class="list-group">
-                    <li class="list-group-item" v-for="(count, descendant) in descendants">{{descendant}} ({{count}})</li>
+                    <li class="list-group-item" v-for="(count, descendant) in descendants">
+                        {{descendant}} ({{count}})
+                    </li>
                 </ul>
-            </p>
-            <button class="btn btn-info" v-on:click="editTag">Edit</button>
-            <button class="btn btn-primary" v-on:click="addChild">Add</button>
-            <button class="btn btn-danger" v-on:click="removeTag">Remove</button>
-            <button class="btn btn-info" v-on:click="toggle" v-if="children.length">
-                {{expanded ? 'Collapse' : 'Expand'}}
-            </button>
+            </div>
         </div>
-    </div>
         <tag v-if="expanded" v-for="(tag, i) in children"
              :key="tag.model._id"
              :model="tag.model"
              :count="tag.count"
              :parent="model._id"
              :depth="depth - i - 1"
-             :parentCount="parentCount + 1"
-        ></tag>
-    </span>
+             :parentCount="parentCount + 1"></tag>
+    </div>
 </template>
 
 <script>
