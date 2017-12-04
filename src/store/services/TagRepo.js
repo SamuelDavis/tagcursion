@@ -49,14 +49,22 @@ export default class TagRepo {
 
         return this
             .persist(newId)
-            .then(tag => this.fetchAll())
-            .then(tags => db.bulkDocs(tags.map(tag => {
-                const count = tag.children.filter(child => child === oldId).length;
-                tag.children.push(...new Array(count).fill(newId));
-                return tag;
-            })))
-            .then(tags => this.delete(oldId))
-            .then(res => newId);
+            .then(tag => this.fetchAll()
+                .then(tags => {
+                    const oldChildren = [];
+                    tags = tags.map(tag => {
+                        const count = tag.children.filter(child => child === oldId).length;
+                        tag.children.push(...new Array(count).fill(newId));
+                        if (tag._id === oldId) {
+                            oldChildren.push(...tag.children);
+                        }
+                        return tag;
+                    });
+                    tags.find(({_id}) => _id === newId).children = oldChildren;
+                    return db.bulkDocs(tags);
+                })
+                .then(tags => this.delete(oldId))
+                .then(res => newId));
     }
 
     static edit(_id, newId = undefined, parent = undefined, count = undefined) {
