@@ -7,7 +7,7 @@
                     <button class="close" @click="close"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
-                    <form>
+                    <form @submit.prevent="save">
                         <div class="form-row" v-if="tag.parent">
                             <div class="col">
                                 <label>
@@ -33,7 +33,7 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" @click="save">Save</button>
+                    <button type="submit" class="btn btn-primary" @click="save">Save</button>
                     <button type="button" class="btn btn-secondary" @click="close">Close</button>
                 </div>
             </div>
