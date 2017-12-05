@@ -19,6 +19,12 @@ export default class TagRepo {
             .then(({rows}) => rows.map(({doc}) => doc));
     }
 
+    static fetchRaw() {
+        return db
+            .allDocs()
+            .then(({rows}) => rows.reduce((raw, {id, value}) => (raw[id] = value.rev) && raw, {}));
+    }
+
     static fetchById(_id) {
         return db.get(_id);
     }
@@ -67,9 +73,9 @@ export default class TagRepo {
                 .then(res => newId));
     }
 
-    static edit(_id, newId = undefined, parent = undefined, count = undefined) {
+    static edit(_id, oldId = undefined, parent = undefined, count = undefined) {
         return this
-            .changeId(_id, newId)
+            .changeId(oldId || _id, _id)
             .then(id => (parent !== undefined && count !== undefined) ? this.persist(id, parent, count, true) : id);
     }
 

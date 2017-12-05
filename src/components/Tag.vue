@@ -8,7 +8,7 @@
                 <button class="btn btn-info" v-if="model._id" @click="editTag">Edit</button>
                 <button class="btn btn-primary" @click="addChild">Add</button>
                 <button class="btn btn-danger" v-if="model._id" @click="removeTag">Del</button>
-                <button class="btn btn-info" v-if="children.length" @click="toggle">
+                <button class="btn btn-info" v-if="model.children.length" @click="toggle">
                     {{expanded ? 'v' : '>'}}
                 </button>
             </div>
@@ -20,13 +20,14 @@
                 </ul>
             </div>
         </div>
-        <tag v-if="expanded" v-for="(tag, i) in children"
-             :key="tag.model._id"
-             :model="tag.model"
-             :count="tag.count"
-             :parent="model._id"
+        <tag v-if="expanded" v-for="(child, i) in childAggregate"
+             :key="child._id"
+             :_id="child._id"
              :depth="depth - i - 1"
-             :parentCount="parentCount + 1"></tag>
+             :count="child.count"
+             :parent="model._id"
+             :parentCount="parentCount + 1"
+        ></tag>
     </div>
 </template>
 
@@ -37,36 +38,31 @@
         store,
         name: "tag",
         props: {
-            count: {
-                type: Number,
-                default: 1
-            },
-            parentCount: {
-                type: Number,
-                default: 0
+            _id: {
+                type: String,
+                default: null
             },
             depth: {
                 type: Number,
                 default: 0
             },
+            count: {
+                type: Number,
+                default: 1
+            },
             parent: {
                 type: String,
                 default: null
             },
-            model: {
-                type: Object,
-                default() {
-                    return {
-                        _id: null,
-                        children: []
-                    };
-                }
+            parentCount: {
+                type: Number,
+                default: 0
             }
         },
         data() {
             return {
                 expanded: false,
-                focused: false
+                focused: false,
             };
         },
         computed: {
@@ -77,16 +73,22 @@
             }
         },
         asyncComputed: {
-            children: {
-                default: [],
+            model: {
+                default: {_id: null, _rev: null, children: []},
                 get() {
                     return this.$store.getters
-                        .getTags(this.model._id)
-                        .then(tags => Object.values(tags.reduce((acc, tag) => {
-                            acc[tag._id] = acc[tag._id] || {model: tag, count: 0};
-                            acc[tag._id].count++;
-                            return acc;
-                        }, {})));
+                        .getTag(this._id)
+                        .catch(err => ({_id: null, _rev: null, children: []}));
+                }
+            },
+            childAggregate: {
+                default: [],
+                get() {
+                    return Object.values(this.model.children.reduce((aggregate, _id) => {
+                        aggregate[_id] = aggregate[_id] || {_id, count: 0};
+                        aggregate[_id].count++;
+                        return aggregate;
+                    }, {}));
                 }
             },
             descendants: {
@@ -102,15 +104,15 @@
             },
             addChild() {
                 this.$store.commit('setEditing', {
-                    model: {_id: null, children: this.model.children},
-                    parent: this.model._id,
-                    count: this.count
+                    parent: this._id,
+                    _id: null,
+                    count: null
                 });
             },
             editTag() {
                 this.$store.commit('setEditing', {
-                    model: this.model,
                     parent: this.parent,
+                    _id: this._id,
                     count: this.count
                 });
             },

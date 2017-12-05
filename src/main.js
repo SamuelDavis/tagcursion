@@ -1,4 +1,4 @@
-import App from './app';
+import App from './components/App';
 import AsyncComputed from 'vue-async-computed';
 import Vue from 'vue';
 

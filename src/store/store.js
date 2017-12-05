@@ -26,35 +26,30 @@ export const store = new Vuex.Store({
         }
     },
     getters: {
-        getTag({tags}) {
-            return _id => findTag(_id, tags);
+        getTag() {
+            return _id => TagRepo.fetchById(_id);
         },
-        getTags({tags}) {
-            return _id => {
-                return Promise.resolve(_id ? findChildren(_id, tags).map(id => findTag(id, tags)) : tags);
-            };
+        getTags() {
+            return () => TagRepo.fetchAll();
         },
-        countDescendants({tags}) {
-            return _id => {
-                function recurseCountChildren(_id, counts = {}) {
-                    return findChildren(_id, tags).reduce((counts, childId) => {
-                        counts[childId] = (counts[childId] || 0) + 1;
-                        return recurseCountChildren(childId, counts);
-                    }, counts);
-                }
+        countDescendants() {
+            return _id => TagRepo
+                .fetchAll()
+                .then(tags => {
+                    function recurseCountChildren(_id, counts = {}) {
+                        return findChildren(_id, tags).reduce((counts, childId) => {
+                            counts[childId] = (counts[childId] || 0) + 1;
+                            return recurseCountChildren(childId, counts);
+                        }, counts);
+                    }
 
-                const counts = recurseCountChildren(_id);
-
-                return Promise.resolve(counts);
-            };
+                    return recurseCountChildren(_id);
+                });
         }
     },
     actions: {
-        addTag(context, {_id, parent = null, count = 1}) {
-            return TagRepo.persist(_id, parent, count);
-        },
-        editTag(context, {_id, newId = null, parent = null, count = null}) {
-            return TagRepo.edit(_id, newId, parent, count);
+        persistTag(context, {_id, oldId = null, parent = null, count = null}) {
+            return TagRepo.edit(_id, oldId, parent, count);
         },
         removeTag(context, {_id, parent = null}) {
             return TagRepo.delete(_id, parent);
@@ -62,10 +57,8 @@ export const store = new Vuex.Store({
     }
 });
 
-TagRepo.onChange(change => TagRepo
-    .fetchAll()
-    .then(tags => store.commit('setTags', tags)));
+TagRepo.onChange(changes => TagRepo.fetchRaw().then(raw => store.commit('setTags', raw)));
 TagRepo
-    .fetchAll()
-    .then(tags => store.commit('setTags', tags));
+    .fetchRaw()
+    .then(raw => store.commit('setTags', raw));
 

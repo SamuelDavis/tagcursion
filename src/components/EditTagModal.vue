@@ -1,14 +1,14 @@
 <template>
-    <div v-if="tag" class="modal modal-open">
+    <div class="modal modal-open">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" v-if="tag.model._id">{{tag.model._id}}</h5>
+                    <h5 class="modal-title" v-if="source._id">{{source._id}}</h5>
                     <button class="close" @click="close"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <form @submit.prevent="save">
-                        <div class="form-row" v-if="tag.parent">
+                        <div class="form-row" v-if="tag && tag.parent">
                             <div class="col">
                                 <label>
                                     Parent
@@ -47,23 +47,20 @@
     export default {
         store,
         name: "edit-tag-modal",
+        props: {
+            source: {
+                type: Object
+            }
+        },
         data() {
-            return {
-                id: '_test_',
-                count: 1
-            };
+            const {_id, count} = (this.source || {});
+            return {id: _id, count: count || 1};
         },
         asyncComputed: {
             tag() {
-                return Promise
-                    .resolve(this.$store.state.editingTag)
-                    .then(tag => {
-                        if (tag) {
-                            this.id = tag.model._id;
-                            this.count = tag.count;
-                        }
-                        return tag;
-                    });
+                return this.$store.getters
+                    .getTag(this.source._id)
+                    .catch(err => ({...this.source}));
             }
         },
         methods: {
@@ -72,9 +69,9 @@
             },
             save() {
                 this.$store
-                    .dispatch('editTag', {
-                        _id: this.tag.model._id || this.id,
-                        newId: this.id,
+                    .dispatch('persistTag', {
+                        _id: this.id,
+                        oldId: this.tag._id || this._id,
                         parent: this.tag.parent,
                         count: parseInt(this.count, 10)
                     })
