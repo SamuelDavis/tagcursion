@@ -101,28 +101,18 @@
                 this.expanded = !this.expanded;
             },
             addChild() {
-                const [_id, count = 1] = (prompt('Name?') || '')
-                    .split('|')
-                    .map(value => value.trim());
-                if (_id) {
-                    this.$store
-                        .dispatch('addTag', {_id, parent: this.model._id, count: parseInt(count, 10)})
-                        .then(res => this.expanded = true);
-                }
+                this.$store.commit('setEditing', {
+                    model: {_id: null, children: this.model.children},
+                    parent: this.model._id,
+                    count: this.count
+                });
             },
             editTag() {
-                const [_id, count = 1] = (prompt('Name?', `${this.model._id}|${this.count}`) || '')
-                    .split('|')
-                    .map(value => value.trim());
-                if (_id) {
-                    this.$store
-                        .dispatch('editTag', {
-                            _id: this.model._id,
-                            newId: _id,
-                            parent: this.parent,
-                            count: parseInt(count, 10)
-                        });
-                }
+                this.$store.commit('setEditing', {
+                    model: this.model,
+                    parent: this.parent,
+                    count: this.count
+                });
             },
             removeTag() {
                 this.$store.dispatch('removeTag', {_id: this.model._id, parent: this.parent});

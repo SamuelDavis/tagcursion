@@ -14,15 +14,21 @@ function findChildren(_id, tags) {
 
 export const store = new Vuex.Store({
     state: {
-        revision: null,
+        editingTag: null,
         tags: []
     },
     mutations: {
         setTags(state, tags) {
             state.tags = tags;
+        },
+        setEditing(state, editingTag) {
+            state.editingTag = editingTag;
         }
     },
     getters: {
+        getTag({tags}) {
+            return _id => findTag(_id, tags);
+        },
         getTags({tags}) {
             return _id => {
                 return Promise.resolve(_id ? findChildren(_id, tags).map(id => findTag(id, tags)) : tags);
